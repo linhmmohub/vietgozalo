@@ -1,0 +1,6 @@
+{
+  "name": "Zalo Driver Attendance & Fleet Check-in System",
+  "description": "Hệ thống điểm danh tài xế tự động qua Zalo Bot, quản lý ca xe, ghi nhận chấm công theo biển số, cảnh báo trễ giờ và xuất báo cáo vận tải.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
