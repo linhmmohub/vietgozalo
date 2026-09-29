@@ -90,6 +90,7 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
       const result = await api.simulateZaloMessage({
         message: text,
         senderName: selectedDriver ? selectedDriver.name : 'Tài xế Zalo',
+        senderId: selectedDriver ? `sim_${selectedDriver.id}` : 'sim_user_001',
         groupId: 'zalo_group_fleet_main',
         groupName: 'ĐỘI XE VẬN TẢI - ĐIỂM DANH & HỖ TRỢ'
       });
@@ -148,7 +149,7 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
       finalCmd = finalCmd.replace('{plate}', selectedDriver.licensePlate);
       finalCmd = finalCmd.replace('{name}', selectedDriver.name);
     } else {
-      finalCmd = finalCmd.replace('{plate}', '29C-882.14');
+      finalCmd = finalCmd.replace('{plate}', '36B-3389');
       finalCmd = finalCmd.replace('{name}', 'Tuấn');
     }
     setInputMessage(finalCmd);
@@ -311,14 +312,30 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
               className="text-left p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-emerald-900/60 text-xs transition-colors group"
             >
               <div className="font-semibold text-emerald-400 flex items-center justify-between">
-                <span>1. Điểm danh nhanh: online{selectedTail}</span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">Chuẩn</span>
+                <span>1. Gõ "online{selectedTail}" (AI hỏi khung giờ)</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">2 Bước</span>
               </div>
               <div className="font-mono text-[11px] text-slate-200 mt-0.5">
                 online{selectedTail}
               </div>
               <div className="text-[10px] text-slate-400 mt-0.5">
-                Vào ca tức thì theo mã 4 số đuôi điện thoại của tài xế {selectedDriver?.name || 'Tuấn'}
+                Nếu không kèm giờ ➔ AI hỏi lại khung giờ (1..5 hoặc tự nhập) để tự phân ca
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('online{tail} làm full')}
+              className="text-left p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-teal-800/60 text-xs transition-colors group"
+            >
+              <div className="font-semibold text-teal-300 flex items-center justify-between">
+                <span>2. Tài xế Full-time: "online{selectedTail} làm full"</span>
+                <span className="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.2 rounded font-mono">Full Day</span>
+              </div>
+              <div className="font-mono text-[11px] text-teal-200 mt-0.5">
+                online{selectedTail} làm full (hoặc: 6-23h, cả ngày)
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                Tự động nhận diện Toàn Ca (06:00 - 23:00) cho tài xế fulltime, không cần hỏi lại
               </div>
             </button>
 
@@ -327,14 +344,14 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
               className="text-left p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-xs transition-colors group"
             >
               <div className="font-semibold text-sky-400 flex items-center justify-between">
-                <span>2. Điểm danh + Khung giờ (8h-14h)</span>
-                <span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-mono">DeepSeek AI</span>
+                <span>3. Điểm danh + Khung giờ cụ thể (8h-14h)</span>
+                <span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-mono">1 Bước</span>
               </div>
               <div className="font-mono text-[11px] text-slate-300 mt-0.5">
                 online{selectedTail} 8h-14h
               </div>
               <div className="text-[10px] text-slate-400 mt-0.5">
-                AI bóc tách tài xế {selectedTail}, nhận diện ca 6 tiếng (08:00 - 14:00)
+                AI bóc tách tài xế {selectedTail}, nhận diện ca (08:00 - 14:00) phân bổ vào ca Vietgo
               </div>
             </button>
 
@@ -419,6 +436,105 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
           </p>
 
           <div className="grid grid-cols-1 gap-1.5 text-xs">
+            {/* Săn đơn theo giờ & tư vấn địa bàn */}
+            <button
+              onClick={() => handleQuickCommand('ai giờ này ở đâu lắm đơn em ơi?')}
+              className="text-left p-2.5 rounded-lg bg-gradient-to-r from-amber-950/70 to-orange-950/60 hover:from-amber-900/60 hover:to-orange-900/60 border border-amber-500/50 text-amber-200 transition-colors"
+            >
+              <div className="font-semibold text-amber-300 flex items-center justify-between">
+                <span>🔥 ai giờ này ở đâu lắm đơn em ơi?</span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono font-bold">Khung Giờ Vàng</span>
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                AI tự check giờ thực tế, chỉ điểm nóng (Hải Bình, Cầu Còng, Bình Minh, VIB, Mai Hương...), khuyên không tụ tập đông
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai đứng đâu nổ đơn ngon nhất?')}
+              className="text-left p-2 rounded-lg bg-slate-950/80 hover:bg-amber-950/40 border border-amber-900/50 text-amber-200 transition-colors"
+            >
+              <div className="font-medium text-amber-300">📍 ai ở đâu lắm đơn / đứng đâu nổ đơn?</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Lịch trình săn đơn Hải Bình, Cầu Còng, Bình Minh, Nhân Loan, VIB...</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai sao app tài xế đang bật mà lại bị tắt?')}
+              className="text-left p-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/50 text-emerald-200 transition-colors"
+            >
+              <div className="font-semibold text-emerald-300 flex items-center justify-between">
+                <span>📱 ai sao app tài xế đang bật mà bị tắt?</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono font-bold">KÈM ẢNH</span>
+              </div>
+              <div className="text-[10px] text-emerald-300/80 mt-0.5">Hướng dẫn tắt toggle khoanh tròn trong Quyền ứng dụng Android</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai kinh nghiệm đi đường Hải Thanh thế nào?')}
+              className="text-left p-2 rounded-lg bg-cyan-950/60 hover:bg-cyan-900/80 border border-cyan-500/50 text-cyan-200 transition-colors"
+            >
+              <div className="font-semibold text-cyan-300 flex items-center justify-between">
+                <span>🗺️ ai kinh nghiệm đi đường Hải Thanh?</span>
+                <span className="text-[10px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded font-mono font-bold">BÍ KÍP MAP</span>
+              </div>
+              <div className="text-[10px] text-cyan-300/80 mt-0.5">Tránh lạc như bác Bốn, xác định 3 trục đường chính</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai cảnh báo khách Toàn Định Hải?')}
+              className="text-left p-2 rounded-lg bg-rose-950/60 hover:bg-rose-900/80 border border-rose-500/50 text-rose-200 transition-colors"
+            >
+              <div className="font-semibold text-rose-300 flex items-center justify-between">
+                <span>⚠️ ai cảnh báo khách Toàn Định Hải?</span>
+                <span className="text-[10px] bg-rose-500/20 text-rose-300 px-1.5 py-0.2 rounded font-mono font-bold">CẢNH BÁO</span>
+              </div>
+              <div className="text-[10px] text-rose-300/80 mt-0.5">Chỉ riêng khách tên Toàn (Định Hải), không quy chung cả vùng</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai khách nhờ đem lên phòng bệnh viện thì sao?')}
+              className="text-left p-2 rounded-lg bg-teal-950/60 hover:bg-teal-900/80 border border-teal-500/50 text-teal-200 transition-colors"
+            >
+              <div className="font-semibold text-teal-300 flex items-center justify-between">
+                <span>🏥 ai khách nhờ đem lên phòng bệnh viện?</span>
+                <span className="text-[10px] bg-teal-500/20 text-teal-300 px-1.5 py-0.2 rounded font-mono font-bold">ỨNG XỬ</span>
+              </div>
+              <div className="text-[10px] text-teal-300/80 mt-0.5">Chịu khó đem lên, tuyệt đối không tỏ thái độ khó chịu</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai gọi khách không nghe máy thì làm sao?')}
+              className="text-left p-2 rounded-lg bg-blue-950/60 hover:bg-blue-900/80 border border-blue-500/50 text-blue-200 transition-colors"
+            >
+              <div className="font-semibold text-blue-300 flex items-center justify-between">
+                <span>📞 ai gọi khách không nghe máy?</span>
+                <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded font-mono font-bold">ZALO & HỖ TRỢ</span>
+              </div>
+              <div className="text-[10px] text-blue-300/80 mt-0.5">Kết bạn Zalo tiêu đề chuẩn, không được gọi anh Cương</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai quán hết món báo hủy thì xử lý thế nào?')}
+              className="text-left p-2 rounded-lg bg-amber-950/60 hover:bg-amber-900/80 border border-amber-500/50 text-amber-200 transition-colors"
+            >
+              <div className="font-semibold text-amber-300 flex items-center justify-between">
+                <span>🍲 ai quán hết món thì làm sao?</span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono font-bold">ĐỔI MÓN</span>
+              </div>
+              <div className="text-[10px] text-amber-300/80 mt-0.5">Chủ động gọi khách đổi món tương đương, tăng tỷ lệ đặt lại</div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('ai tới quán mà quán làm đồ lâu quá?')}
+              className="text-left p-2 rounded-lg bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/50 text-indigo-200 transition-colors"
+            >
+              <div className="font-semibold text-indigo-300 flex items-center justify-between">
+                <span>⏳ ai quán làm đồ lâu khi đã tới?</span>
+                <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded font-mono font-bold">TRẤN AN</span>
+              </div>
+              <div className="text-[10px] text-indigo-300/80 mt-0.5">Nhắn tin trên app báo khách đợi chút, có đồ giao liền</div>
+            </button>
+
             <button
               onClick={() => handleQuickCommand('ai chém gió tí đi em ơi!')}
               className="text-left p-2 rounded-lg bg-gradient-to-r from-purple-950/60 to-slate-950 hover:from-purple-900/60 hover:to-slate-900 border border-purple-500/40 text-purple-200 transition-colors"
@@ -438,14 +554,14 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
               onClick={() => handleQuickCommand('ai sdt của bác tài {name} chạy xe {plate}?')}
               className="text-left p-2 rounded-lg bg-slate-950/80 hover:bg-indigo-950/80 border border-indigo-900/50 text-indigo-200 transition-colors"
             >
-              <div className="font-medium">📞 ai sdt của bác tài {selectedDriver?.name || 'Tuấn'} 29C?</div>
+              <div className="font-medium">📞 ai sdt của bác tài {selectedDriver?.name || 'Tuấn'} 36B?</div>
             </button>
 
             <button
               onClick={() => handleQuickCommand('ai hôm nay tài xế xe {plate} có đi làm không em?')}
               className="text-left p-2 rounded-lg bg-slate-950/80 hover:bg-indigo-950/80 border border-indigo-900/50 text-indigo-200 transition-colors"
             >
-              <div className="font-medium">⏰ ai xe {selectedDriver?.licensePlate || '29E1'} hôm nay có chạy không?</div>
+              <div className="font-medium">⏰ ai xe {selectedDriver?.licensePlate || '36B'} hôm nay có chạy không?</div>
             </button>
 
             {/* Anti-fraud & Strict Regulation Questions */}
@@ -483,10 +599,11 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
             </button>
 
             <button
-              onClick={() => handleQuickCommand('ai hotline trưởng phòng điều phối xe lúc khẩn cấp?')}
+              onClick={() => handleQuickCommand('bot liên hệ ai khi cần hỗ trợ về tài xế?')}
               className="text-left p-2 rounded-lg bg-slate-950/80 hover:bg-indigo-950/80 border border-indigo-900/50 text-indigo-200 transition-colors"
             >
-              <div className="font-medium">🚨 ai hotline điều phối xe khẩn cấp?</div>
+              <div className="font-medium">📞 bot liên hệ ai khi cần hỗ trợ?</div>
+              <div className="text-[10px] text-indigo-300/80 mt-0.5">SĐT A Cương (0967659655), A Sức & A Linh</div>
             </button>
 
             <button
@@ -573,7 +690,7 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
                     id: 'msg-welcome',
                     sender: 'bot',
                     senderName: '🤖 Zalo Fleet & DeepSeek AI Bot',
-                    text: '🤖 BOT ĐIỂM DANH & TRỢ LÝ AI ĐÃ SẴN SÀNG TRONG NHÓM!\n👉 Tra cứu phím tắt & giờ làm việc: Nhắn "trogiupvietgo" hoặc "trợ giúp"\n👉 Điểm danh siêu gọn: online3389 (hoặc: on3389, online3389 8h-14h)\n👉 Bác tài Full-time chỉ cần điểm danh 1 lần duy nhất trong ngày/ca.\n👉 Ra ca: off3389 (hoặc: kt3389)\n👉 Báo nghỉ phép: nghi3389 [lý do]\n👉 Gọi AI chém gió / hỏi đáp: ai [nội dung] (VD: ai sdt bác tài Tuấn?, ai kho Hà Nội?)',
+                    text: '🤖 BOT ĐIỂM DANH & TRỢ LÝ AI ĐÃ SẴN SÀNG TRONG NHÓM!\n👉 Tra cứu phím tắt & giờ làm việc: Nhắn "trogiupvietgo" hoặc "trợ giúp"\n👉 Điểm danh siêu gọn: online3389 (hoặc: checkin3389, online3389 8h-14h)\n👉 Bác tài Full-time chỉ cần điểm danh 1 lần duy nhất trong ngày/ca.\n👉 Ra ca: off3389 (hoặc: checkout3389)\n👉 Báo nghỉ phép: nghi3389 [lý do]\n👉 Gọi AI chém gió / hỏi đáp: ai [nội dung] (VD: ai sdt bác tài Cương?, ai địa bàn hoạt động?)',
                     time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
                   }
                 ]);
@@ -649,6 +766,23 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
                     }`}
                   >
                     {msg.text}
+                    {isBot && (msg.text.includes('QUẢN LÝ ỨNG DỤNG NẾU KHÔNG DÙNG') || msg.text.includes('khoanh tròn') || msg.text.includes('Quyền ứng dụng')) && (
+                      <div className="mt-3 pt-2 border-t border-slate-800/80">
+                        <div className="text-[11px] text-amber-300 font-semibold mb-1 flex items-center gap-1">
+                          <span>📸 ẢNH HƯỚNG DẪN: Tắt mục khoanh tròn & mũi tên chỉ</span>
+                        </div>
+                        <img
+                          src="/images_training/photo_2026-09-29_15-28-30.jpg"
+                          alt="Hướng dẫn quyền ứng dụng"
+                          className="rounded-xl border border-indigo-500/50 shadow-lg max-h-72 w-auto object-contain cursor-pointer hover:opacity-90 transition-all hover:scale-[1.02]"
+                          onClick={() => window.open('/images_training/photo_2026-09-29_15-28-30.jpg', '_blank')}
+                          title="Bấm để phóng to ảnh hướng dẫn"
+                        />
+                        <div className="text-[10px] text-slate-400 mt-1 italic">
+                          (Bấm vào ảnh để xem kích thước đầy đủ)
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className={`text-[10px] text-slate-500 ${isBot ? 'text-left' : 'text-right'}`}>

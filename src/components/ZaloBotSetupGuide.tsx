@@ -26,6 +26,24 @@ interface ZaloBotSetupGuideProps {
   onUpdateConfig: (config: Partial<BotConfig>) => void;
 }
 
+function cleanZaloMarkdown(text: string): string {
+  if (!text || typeof text !== 'string') return '';
+  return text
+    .replace(/```[a-zA-Z0-9_-]*\n?/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\*\*\*([^*]+)\*\*\*/g, '$1')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/(^|[^\*])\*([^\*\n]+)\*([^\*]|$)/g, '$1$2$3')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/(^|[^_])_([^_\n]+)_([^_]|$)/g, '$1$2$3')
+    .replace(/^#{1,6}\s+(.+)$/gm, '$1')
+    .replace(/^(\s*)\*\s+/gm, '$1• ')
+    .replace(/^>\s+/gm, '')
+    .replace(/\*\*/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export const ZaloBotSetupGuide: React.FC<ZaloBotSetupGuideProps> = ({
   botConfig,
   onUpdateConfig,
@@ -36,7 +54,7 @@ export const ZaloBotSetupGuide: React.FC<ZaloBotSetupGuideProps> = ({
   const [isSaved, setIsSaved] = useState(false);
 
   // Test AI in setup tab
-  const [testQuestion, setTestQuestion] = useState('Bác tài Tuấn chạy xe 29C số điện thoại bao nhiêu?');
+  const [testQuestion, setTestQuestion] = useState('Bác tài Cương số điện thoại bao nhiêu?');
   const [testAnswer, setTestAnswer] = useState<string | null>(null);
   const [isTestingAI, setIsTestingAI] = useState(false);
 
@@ -104,6 +122,8 @@ console.log('🚀 ZALO FLEET ATTENDANCE & DEEPSEEK BOT - KHỞI ĐỘNG...');
 console.log('📡 Webhook URL:', CONFIG.WEBHOOK_URL);
 console.log('---------------------------------------------------------');
 
+${cleanZaloMarkdown.toString()}
+
 async function startBot() {
   try {
     let sessionData = null;
@@ -162,7 +182,7 @@ async function startBot() {
         });
 
         if (res.data && res.data.reply && CONFIG.AUTO_REPLY) {
-          const replyText = res.data.reply;
+          const replyText = cleanZaloMarkdown(res.data.reply);
           console.log(\`[🤖 Bot Auto-Reply -> \${senderName}]:\\n\${replyText}\`);
           
           if (isGroup && groupId) {
@@ -395,7 +415,7 @@ startBot();
                   rows={8}
                   value={formData.companyKnowledge}
                   onChange={(e) => setFormData({ ...formData, companyKnowledge: e.target.value })}
-                  placeholder="Nhập thông tin hotline điều phối, địa chỉ kho bãi, quy định xăng dầu, phụ cấp ca, hỗ trợ sửa chữa lưu động..."
+                  placeholder="Nhập thông tin hỗ trợ tài xế (A Cương 0967.659.655, A Sức 0969.397.370, A Linh), quy định điểm danh, sự cố ứng dụng..."
                   className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-200 font-mono text-xs focus:outline-none focus:border-indigo-500 leading-relaxed"
                 />
                 <span className="text-[10px] text-slate-500 mt-1 block">
@@ -428,24 +448,24 @@ startBot();
                 <div className="flex flex-wrap gap-1.5 text-[11px]">
                   <button
                     type="button"
-                    onClick={() => setTestQuestion('Bác tài Tuấn chạy xe 29C số điện thoại bao nhiêu?')}
+                    onClick={() => setTestQuestion('Bác tài Cương số điện thoại bao nhiêu?')}
                     className="bg-slate-950 hover:bg-slate-800 px-2 py-1 rounded border border-slate-800 text-slate-300"
                   >
-                    🔍 SĐT bác tài Tuấn 29C?
+                    🔍 SĐT bác tài Cương?
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTestQuestion('Hôm nay tài xế xe 51D có đi làm không?')}
+                    onClick={() => setTestQuestion('Hôm nay tài xế xe 36B có đi làm không?')}
                     className="bg-slate-950 hover:bg-slate-800 px-2 py-1 rounded border border-slate-800 text-slate-300"
                   >
-                    ⏰ Xe 51D hôm nay có chạy?
+                    ⏰ Xe 36B hôm nay có chạy?
                   </button>
                   <button
                     type="button"
-                    onClick={() => setTestQuestion('Cho anh số hotline trưởng phòng điều phối xe lúc khẩn cấp')}
+                    onClick={() => setTestQuestion('Cần hỗ trợ về tài xế hoặc công việc thì liên hệ ai?')}
                     className="bg-slate-950 hover:bg-slate-800 px-2 py-1 rounded border border-slate-800 text-slate-300"
                   >
-                    🚨 Hotline điều phối xe?
+                    📞 SĐT hỗ trợ tài xế (A Cương)?
                   </button>
                   <button
                     type="button"
@@ -637,8 +657,8 @@ startBot();
               </p>
               <div className="bg-slate-900 p-2.5 rounded-lg font-mono text-slate-200 border border-slate-800 space-y-1">
                 <div className="text-purple-300">💬 Chém gió: "ai chém gió tí đi", "ai kể chuyện cười tài xế"</div>
-                <div className="text-blue-300">🔍 Tra cứu SĐT: "ai sdt bác tài Tuấn 29C?"</div>
-                <div className="text-slate-300">🚨 Khẩn cấp & Kho: "ai hotline trưởng phòng điều phối?", "ai kho ở đâu?"</div>
+                <div className="text-blue-300">🔍 Tra cứu SĐT: "ai sdt bác tài Cương?"</div>
+                <div className="text-slate-300">📞 Hỗ trợ tài xế: "bot liên hệ ai?", "bot sdt anh Cương?"</div>
               </div>
             </div>
           </div>

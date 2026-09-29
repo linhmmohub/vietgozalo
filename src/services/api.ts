@@ -200,6 +200,7 @@ export const api = {
   async simulateZaloMessage(data: {
     message: string;
     senderName?: string;
+    senderId?: string;
     groupId?: string;
     groupName?: string;
   }) {

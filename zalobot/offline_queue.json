@@ -1,0 +1,62 @@
+[
+  {
+    "payload": {
+      "senderId": "1489594543200076902",
+      "senderName": "Linh Vietgo Nghi Sơn",
+      "groupId": "1786288624818810368",
+      "groupName": "Nhóm Zalo",
+      "isGroup": true,
+      "message": "online xếp bôn ơi",
+      "timestamp": 1790685836742
+    },
+    "targetThread": "1786288624818810368",
+    "threadType": 1,
+    "isGroup": true,
+    "enqueuedAt": 1790685836745
+  },
+  {
+    "payload": {
+      "senderId": "1489594543200076902",
+      "senderName": "Linh Vietgo Nghi Sơn",
+      "groupId": "1786288624818810368",
+      "groupName": "Nhóm Zalo",
+      "isGroup": true,
+      "message": "checkout7363",
+      "timestamp": 1790695808011
+    },
+    "targetThread": "1786288624818810368",
+    "threadType": 1,
+    "isGroup": true,
+    "enqueuedAt": 1790695808015
+  },
+  {
+    "payload": {
+      "senderId": "1489594543200076902",
+      "senderName": "Linh Vietgo Nghi Sơn",
+      "groupId": "6097842818822207317",
+      "groupName": "Nhóm Zalo",
+      "isGroup": true,
+      "message": "checkout2876",
+      "timestamp": 1790698022449
+    },
+    "targetThread": "6097842818822207317",
+    "threadType": 1,
+    "isGroup": true,
+    "enqueuedAt": 1790698022452
+  },
+  {
+    "payload": {
+      "senderId": "1489594543200076902",
+      "senderName": "Linh Vietgo Nghi Sơn",
+      "groupId": "6097842818822207317",
+      "groupName": "Nhóm Zalo",
+      "isGroup": true,
+      "message": "online2876",
+      "timestamp": 1790698072992
+    },
+    "targetThread": "6097842818822207317",
+    "threadType": 1,
+    "isGroup": true,
+    "enqueuedAt": 1790698072995
+  }
+]

@@ -440,7 +440,7 @@ export const DriverManagement: React.FC<DriverManagementProps> = ({
                     required
                     value={formData.licensePlate}
                     onChange={(e) => setFormData({ ...formData, licensePlate: e.target.value.toUpperCase() })}
-                    placeholder="VD: 29C-882.14"
+                    placeholder="VD: 36B-3389"
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 font-mono font-bold focus:outline-none focus:border-blue-500 uppercase"
                   />
                 </div>
@@ -462,7 +462,7 @@ export const DriverManagement: React.FC<DriverManagementProps> = ({
                     type="text"
                     value={formData.zaloName}
                     onChange={(e) => setFormData({ ...formData, zaloName: e.target.value })}
-                    placeholder="VD: Tuấn Nguyễn (Shipper 29E1)"
+                    placeholder="VD: Tuấn Nguyễn (Đuôi 3389)"
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -500,7 +500,7 @@ export const DriverManagement: React.FC<DriverManagementProps> = ({
                   type="text"
                   value={formData.route}
                   onChange={(e) => setFormData({ ...formData, route: e.target.value })}
-                  placeholder="VD: Kho Hà Nội - Bắc Ninh - KCN Quế Võ"
+                  placeholder="VD: Khu vực Tĩnh Gia, Thanh Hóa"
                   className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-slate-100 focus:outline-none focus:border-blue-500"
                 />
               </div>
@@ -565,9 +565,9 @@ export const DriverManagement: React.FC<DriverManagementProps> = ({
                 rows={8}
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
-                placeholder={`Nguyễn Văn A | 29C-111.22 | 0912345678 | Hà Nội - Hải Phòng
-Trần Văn B | 51D-333.44 | 0988112233 | TP.HCM - Bình Dương
-Lê Văn C | 60B-555.66 | 0903445566 | Đồng Nai - Vũng Tàu`}
+                placeholder={`Nguyễn Văn A | 36B-111.22 | 0912345678 | Phường Hải Hòa, Tĩnh Gia
+Trần Văn B | 36B-333.44 | 0988112233 | Khu vực Chợ Còng, Tĩnh Gia
+Lê Văn C | 36B-555.66 | 0903445566 | Cảng Nghi Sơn, Tĩnh Gia`}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-slate-100 font-mono text-xs focus:outline-none focus:border-blue-500"
               />
 
