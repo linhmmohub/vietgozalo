@@ -9,8 +9,8 @@
       "secure": true,
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.484Z",
-      "lastAccessed": "2026-09-29T10:32:58.484Z",
+      "creation": "2026-10-03T16:48:28.840Z",
+      "lastAccessed": "2026-10-03T16:48:28.840Z",
       "sameSite": "lax"
     },
     {
@@ -22,8 +22,8 @@
       "secure": true,
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.488Z",
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:28.844Z",
       "sameSite": "lax"
     },
     {
@@ -35,8 +35,8 @@
       "path": "/",
       "secure": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.875Z"
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:29.181Z"
     },
     {
       "key": "zpsid",
@@ -47,8 +47,8 @@
       "secure": true,
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.875Z",
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:29.181Z",
       "sameSite": "none"
     },
     {
@@ -59,8 +59,8 @@
       "path": "/",
       "secure": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.875Z",
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:29.181Z",
       "sameSite": "none"
     },
     {
@@ -73,8 +73,8 @@
       "secure": true,
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.488Z"
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:28.844Z"
     },
     {
       "key": "zpsid",
@@ -85,8 +85,8 @@
       "secure": true,
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.488Z",
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:28.844Z",
       "sameSite": "none"
     },
     {
@@ -97,38 +97,38 @@
       "path": "/",
       "secure": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.488Z",
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:28.844Z",
       "sameSite": "none"
     },
     {
       "key": "zpw_sek",
       "value": "uveX.193275731.a0.NhJH7661xEFYz6cEaDFiXShnYUwJwSxNnE2lj-3ueFJtbx_kX9AqlV2-dSF6xj6dpA9KaCCBaz38qdaU2xdiXG",
-      "maxAge": 7774793,
+      "maxAge": 7768225,
       "domain": "chat.zalo.me",
       "path": "/",
       "secure": true,
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.488Z",
-      "lastAccessed": "2026-09-29T10:32:58.875Z",
+      "creation": "2026-10-03T16:48:28.844Z",
+      "lastAccessed": "2026-10-03T16:48:29.181Z",
       "sameSite": "lax"
     },
     {
       "key": "app.event.zalo.me",
       "value": "8037064980397607680",
-      "expires": "2026-10-01T10:33:57.000Z",
+      "expires": "2026-10-05T16:49:33.000Z",
       "domain": "zalo.me",
       "path": "/",
       "httpOnly": true,
       "hostOnly": false,
-      "creation": "2026-09-29T10:32:58.489Z",
-      "lastAccessed": "2026-09-29T10:32:58.875Z"
+      "creation": "2026-10-03T16:48:28.845Z",
+      "lastAccessed": "2026-10-03T16:48:29.181Z"
     }
   ],
   "imei": "8b06ed13-4736-4d8f-97af-025a0c9a16eb-a69b52f9d7f760edf3fd052bcda2542f",
   "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0",
   "uid": "1798499850381709631",
-  "savedAt": "2026-09-29T10:32:58.890Z",
+  "savedAt": "2026-10-03T16:48:29.195Z",
   "loginMethod": "cookie_reuse"
 }

@@ -13,6 +13,7 @@ const { Zalo, LoginQRCallbackEventType, ThreadType } = require('zca-js');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
+const child_process = require('child_process');
 
 // Tải biến môi trường từ file .env (thử cả thư mục gốc và thư mục zalobot)
 const rootEnvPath = path.resolve(__dirname, '../.env');
@@ -36,6 +37,15 @@ const CONFIG = {
 
 const LOG_FILE = path.resolve(__dirname, 'bot.log');
 const OFFLINE_QUEUE_FILE = path.resolve(__dirname, 'offline_queue.json');
+// Tránh crash tiến trình khi gặp lỗi mạng không bắt được
+process.on('uncaughtException', (err) => {
+  console.error('[⚠️ Uncaught Exception in bot.js]:', err.message || err);
+  logToFile(`[CRASH PREVENTED] Uncaught Exception: ${err.message}`);
+});
+process.on('unhandledRejection', (reason) => {
+  console.warn('[⚠️ Unhandled Rejection in bot.js]:', reason);
+});
+
 
 function logToFile(msg) {
   try {
@@ -104,6 +114,62 @@ function addToOfflineQueue(payload, targetThread, threadType, isGroup) {
   saveOfflineQueue(queue);
   console.log(`[📥 Queue] Đã lưu vào hàng đợi offline: "${payload.message}" từ ${payload.senderName}`);
   logToFile(`[📥 QUEUE] Lưu hàng đợi: "${payload.message}" từ ${payload.senderName}`);
+}
+
+
+// =========================================================================
+// TỰ ĐỘNG GIÁM SÁT & BẬT MÁY CHỦ PORT 3000 (Tự phục hồi vĩnh viễn)
+// =========================================================================
+let serverChildProcess = null;
+let isStartingServer = false;
+
+async function ensureServerRunning() {
+  const alive = await isServerAlive();
+  if (alive) return true;
+  if (isStartingServer) return false;
+  
+  isStartingServer = true;
+  console.log('[🚀 Tự Động Bật Server] Phát hiện máy chủ port 3000 chưa bật. Bot đang tự động bật server.ts...');
+  logToFile('[🚀 TỰ ĐỘNG BẬT SERVER] Đang khởi động server.ts...');
+
+  const rootDir = path.resolve(__dirname, '..');
+  const tsxCli = path.resolve(rootDir, 'node_modules/tsx/dist/cli.mjs');
+  const serverScript = path.resolve(rootDir, 'server.ts');
+
+  try {
+    serverChildProcess = child_process.spawn(process.execPath, [tsxCli, serverScript], {
+      cwd: rootDir,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: false
+    });
+
+    serverChildProcess.stdout.on('data', (d) => {
+      const text = d.toString();
+      if (text.includes('SERVER READY') || text.includes('PORT 3000')) {
+        console.log('[✅ Server Auto-Start] Máy chủ trung tâm cổng 3000 đã sẵn sàng!');
+        logToFile('[✅ SERVER AUTO-START] Máy chủ 3000 đã chạy thành công');
+        isStartingServer = false;
+      }
+    });
+
+    serverChildProcess.on('exit', (code) => {
+      console.warn(`[⚠️ Server Exit] server.ts đã dừng (exit code ${code}).`);
+      serverChildProcess = null;
+      isStartingServer = false;
+    });
+
+    for (let i = 0; i < 8; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      if (await isServerAlive()) {
+        isStartingServer = false;
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error('❌ Không thể tự động khởi động server.ts:', err.message);
+    isStartingServer = false;
+  }
+  return false;
 }
 
 // Kiểm tra server có sẵn sàng không
@@ -184,9 +250,11 @@ function startHealthCheckLoop(getApi) {
     if (!alive) {
       if (!serverWasDown) {
         serverWasDown = true;
-        console.log('[⚠️ Health] Server localhost:3000 đang DOWN. Hàng đợi sẽ lưu các lệnh điểm danh.');
-        logToFile('[⚠️ HEALTH] Server DOWN');
+        console.log('[⚠️ Health] Server localhost:3000 đang DOWN. Bot đang tự động bật lại...');
+        logToFile('[⚠️ HEALTH] Server DOWN - bot tự động bật lại');
       }
+      // TỰ ĐỘNG BẬT LẠI SERVER NẾU CHƯA CHẠY!
+      await ensureServerRunning();
     } else if (serverWasDown) {
       // Server vừa khôi phục!
       serverWasDown = false;
@@ -235,8 +303,38 @@ function isAIQuestion(text) {
   if (!text || typeof text !== 'string') return false;
   const raw = text.trim();
   const lower = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, 'd');
-  
+  const words = lower.split(/\s+/);
+
+  const mentionsBot = (
+    words.includes('bot') || 
+    lower.includes('bot') || 
+    lower.includes('bót') ||
+    /\b(?:bot|bót)\b/i.test(raw)
+  );
+
+  const isComplaint = (
+    lower.includes('it don') ||
+    lower.includes('khong co don') ||
+    lower.includes('ko co don') ||
+    lower.includes('k co don') ||
+    lower.includes('e qua') ||
+    lower.includes('e don') ||
+    lower.includes('than e') ||
+    lower.includes('ren') ||
+    lower.includes('than phien') ||
+    lower.includes('doi don') ||
+    lower.includes('khong ban don') ||
+    lower.includes('dung dau') ||
+    lower.includes('nhieu don') ||
+    lower.includes('san don') ||
+    lower.includes('diem nong') ||
+    lower.includes('dung o dau') ||
+    (lower.includes('don') && (lower.includes('it') || lower.includes('e')))
+  );
+
   return (
+    mentionsBot ||
+    isComplaint ||
     lower.startsWith('bot') ||
     lower.startsWith('hoi') ||
     lower.startsWith('ai') ||
@@ -273,8 +371,8 @@ async function askDeepSeekDirectly(question, senderName) {
       messages: [
         {
           role: 'system',
-          content: `Bạn là trợ lý ảo AI thông minh, hóm hỉnh và thân thiện của Đội ngũ Shipper Xe máy Giao Đồ Ăn Vietgo Food Tĩnh Gia (Nghi Sơn, Thanh Hóa).
-- Đối tượng giao tiếp: Bác tài, shipper xe máy giao đồ ăn Vietgo. Xưng hô thân mật: em/bot - bác tài/anh em.
+          content: `Bạn là trợ lý ảo AI thông minh, hóm hỉnh và thân thiện của Đội ngũ Tài xế Xe máy Giao Đồ Ăn Vietgo Food Tĩnh Gia (Nghi Sơn, Thanh Hóa).
+- Đối tượng giao tiếp: Bác tài, tài xế xe máy giao đồ ăn Vietgo. Xưng hô thân mật: em/bot - bác tài/anh em.
 - ĐỊA BÀN DUY NHẤT: Thị xã Tĩnh Gia (Nghi Sơn), Thanh Hóa.
 - LỊCH TRÌNH VÀNG SĂN ĐƠN THEO GIỜ TẠI TĨNH GIA:
   • Sáng sớm 6h-9h: Khu vực Hải Bình, Hải Yến (dân dậy sớm ăn sáng, cafe).
@@ -284,23 +382,71 @@ async function askDeepSeekDirectly(question, senderName) {
   • Tối 19h-21h: Khu vực Phố Còng / Cầu Còng nổ cực tốt (bữa tối gia đình, phố ẩm thực).
   • Tối muộn 21h đổ đi: Đường đôi Hải Bình làm trùm đơn đêm.
   • Đêm khuya 22h-23h: Quán ăn đêm gần ngân hàng VIB, Mai Hương, Gấu Cola.
-- KHI TÀI XẾ HỎI Ở ĐÂU NHIỀU ĐƠN / ĐỨNG ĐÂU / THAN Ế:
-  • Hài hước, điều hướng, trấn an bác tài. Xem giờ hiện tại để chỉ điểm nóng phù hợp.
-  • Nhắc nhở: Giờ cao điểm nắng hay mưa cũng chịu khó làm việc, không hết cao điểm đơn lại lẻ tẻ rồi tiếc!
-  • Nhắc nhở: Sắp xếp khu vực cho tốt, TUYỆT ĐỐI KHÔNG TỤ TẬP BU ĐÔNG 1 CHỖ để tránh dẫm chân nhau, chia mỏng ra các điểm nóng thì ai cũng nổ đơn liên tục!
+- KHI TÀI XẾ HỎI Ở ĐÂU NHIỀU ĐƠN / ĐỨNG ĐÂU / THAN Ế / RÊN ÍT ĐƠN / KHÔNG CÓ ĐƠN:
+  • TRẢ LỜI GÓP Ý Ở GÓC ĐỘ VUI VẺ, HÀI HƯỚC, KHÔNG GẮT GỎNG:
+  • Khuyên anh em: Thời gian ngồi than phiền, rên rỉ hay lướt mạng, hãy tranh thủ mở app VietGo đi ĐÓNG GÓP ĐỊA ĐIỂM kiếm ngọc (1.000 ngọc / địa điểm hợp lệ, không giới hạn).
+  • Phân tích tình cảm, thực tế: Chạy xe ai cũng xót tiền xăng, lúc vắng đơn hoặc chạy đơn xa (ví dụ chạy từ Còng vào Tân Trường), đừng để xe không chạy về! Dành chút thời gian dọc đường chụp 30-50 địa điểm (quán ăn, tạp hóa, công ty, xưởng...) là kiếm thêm 30k - 50k (30.000 - 50.000 ngọc) đổ đầy bình xăng rồi, biến cuốc đi xa thành cuốc bội thu.
+  • Nêu gương thực tế: Bác Đình Hải đã âm thầm góp được hơn 100 địa điểm (bỏ túi hơn 100k ngọc ngọt xớt), Anh Cương đã góp được 75 địa điểm (bỏ túi 75k ngọc tha hồ đổi quà).
+  • Nhắc nhở: "LÀM VIỆC ÂM THẦM KIẾM TIỀN ĐỪNG RÊN RỈ!".
+  • NGUYÊN TẮC SÓNG & BẮN ĐƠN: TUYỆT ĐỐI TRÁNH TỤ TẬP BU ĐÔNG 1 CHỖ! Tụ tập đông người làm sóng 4G và GPS bị nghẽn, sóng yếu thì máy chủ KHÔNG THỂ BẮN ĐƠN ĐƯỢC!
+  • NGUYÊN TẮC VÀNG: "MỖI NGƯỜI 1 VỊ TRÍ", tản đều ra các ngã đường, điểm nóng thì sóng mới căng, máy chủ mới dễ bắn đơn nổ liên tục!
+  • QUY TẮC GỢI Ý ĐIỂM NÓNG THEO GIỜ THỰC TẾ:
+    - TUYỆT ĐỐI KHÔNG GỬI TẤT CẢ CÁC KHUNG GIỜ CÙNG MỘT LÚC!
+    - Xem giờ hiện tại để chỉ điểm đúng 1 điểm nóng linh hoạt theo khung giờ đang diễn ra (Sáng 6h-10h: Hải Bình/Hải Yến; Trưa 10h-13h30: Cầu Còng; Chiều 13h30-16h: Bình Minh/Đậu Hi; Tan tầm 16h-19h: Gỏi Vịt Nhân Loan; Tối 19h-21h30: Phố Còng/Cầu Còng; Đêm 21h30 đổ đi: Đường đôi Hải Bình).
+  • CẢNH BÁO TỶ LỆ NHẬN ĐƠN & THẢ TRÔI ĐƠN:
+    - Khi hệ thống bắn đơn: TUYỆT ĐỐI KHÔNG từ chối nhiều hoặc thả trôi hết hạn! Sẽ làm tụt tỷ lệ nhận đơn (Acceptance Rate), bị thuật toán hạ ưu tiên và hạn chế phát đơn tiếp theo! Hãy cố gắng nhận và giao đơn để giữ uy tín cao.
+  • QUY ĐỊNH NGHỈ CHẠY / KHÔNG HOẠT ĐỘNG:
+    - Nếu không hoạt động, không chạy được nữa (bận việc, hỏng xe...): BẮT BUỘC tắt app và nhắn lệnh checkout off (off[mã]) ngay lập tức để hệ thống điều phối cho tài xế khác đang sẵn sàng!
 - BÍ KÍP ĐI ĐƯỜNG HẢI THANH:
   • Địa hình phức tạp dốc cát ngõ ngách, KHÔNG NÊN phụ thuộc hoàn toàn vào Google Maps từ đầu như bác Bốn.
   • Xem trước địa chỉ (trục chính, ven sông hay mặt biển), đến gần 200-500m mới bật Google Map chỉ đúng nhà.
 - LƯU Ý VỀ ĐỊNH HẢI & TRƯỜNG HỢP CÁ BIỆT KHÁCH TÊN TOÀN:
   • NGUYÊN TẮC: TUYỆT ĐỐI KHÔNG QUY CHUNG CẢ ĐỊNH HẢI LÀ BOM HÀNG! Khách hàng và bà con ở Định Hải vẫn rất uy tín, đặt đơn đàng hoàng, anh em nhận đơn cứ giao bình thường.
   • Nếu tài xế chỉ hỏi chung về Định Hải (ví dụ: "Định Hải có đơn không", "ở Định Hải thế nào"): Trả lời bình thường theo khung giờ, TUYỆT ĐỐI KHÔNG tự động cảnh báo bom hàng làm tài xế hoang mang!
-  • CHỈ KHI TÀI XẾ HỎI ĐÍCH DANH VỀ "ANH TOÀN" HOẶC "KHÁCH BOM HÀNG Ở ĐỊNH HẢI": Mới giải thích là ở Định Hải CHỈ CÓ DUY NHẤT khách tên TOÀN từng có tiền lệ xấu (đặt đơn rồi không nghe máy, block số shipper giữa trời mưa bão).
+  • CHỈ KHI TÀI XẾ HỎI ĐÍCH DANH VỀ "ANH TOÀN" HOẶC "KHÁCH BOM HÀNG Ở ĐỊNH HẢI": Mới giải thích là ở Định Hải CHỈ CÓ DUY NHẤT khách tên TOÀN từng có tiền lệ xấu (đặt đơn rồi không nghe máy, block số tài xế giữa trời mưa bão).
   • CHỈ KHI GẶP ĐƠN CỦA ANH TOÀN Ở ĐỊNH HẢI: Mới bắt buộc gọi điện thoại xác nhận trước khi đi, gọi 3 lần không nghe máy báo ngay Anh Cương 0967.659.655 để hủy đơn hợp lệ, không tự ý chạy ra tránh chịu thiệt. Còn đơn của khách khác ở Định Hải vẫn chạy bình thường!
 - BÍ KÍP ỨNG XỬ & XỬ LÝ TÌNH HUỐNG ĐƠN HÀNG THỰC TẾ CHO TÀI XẾ:
   • Gọi khách không nghe máy: Hướng dẫn kết bạn Zalo với khách với lời chào: "Tài xế Vietgo không liên lạc được anh hoặc chị". Nếu khách không có Zalo hoặc vẫn không được -> Gọi Anh Cương (0967.659.655) giải quyết tiếp, không tự ý hủy đơn.
   • Quán hết món / báo hủy: Hướng dẫn gọi lại ngay cho khách báo đổi món tương đương, giúp khách chủ động và tăng tỷ lệ khách đặt lại đơn mới.
   • Quán làm đồ lâu khi tài xế đã tới quán: Nhắn tin trên app cho khách: "Anh/chị đợi em một chút nhé, quán đang làm đồ, có cái em giao liền qua ạ" để khách an tâm không hủy đơn hay đánh giá 1 sao.
   • Khách nhờ mang lên phòng bệnh viện: Người ở viện đi lại khó khăn, tài xế hãy chịu khó đem lên tận phòng giúp khách. TUYỆT ĐỐI KHÔNG ĐƯỢC TỎ THÁI ĐỘ khó chịu hay gắt gỏng, luôn niềm nở tận tình!
+
+- CHƯƠNG TRÌNH KIẾM TIỀN & CÀY NGỌC TỪ THÊM ĐỊA ĐIỂM TRÊN APP TÀI XẾ:
+  • Mức thưởng: 1.000 ngọc / mỗi địa điểm hợp lệ được duyệt. KHÔNG GIỚI HẠN số lượng địa điểm! Anh em tranh thủ ngoài giờ cao điểm hoặc lúc vắng đơn đi cày ngọc kiếm thêm thu nhập (lụm 20-50 điểm là có ngay 20.000 - 50.000 ngọc tha hồ đổi thưởng).
+  • Cách làm: Mở App Tài Xế VietGo > chọn mục "Đóng góp / Thêm địa điểm" > Bấm "Lấy vị trí hiện tại" ngay tại chỗ (không sửa tọa độ thủ công để tránh lệch) > Chụp ảnh > Gửi duyệt.
+  • QUY ĐỊNH CHỤP ẢNH BẮT BUỘC: Phải chụp rõ mặt tiền, BIỂN HIỆU, SỐ NHÀ, TÊN CÔNG TY, CỬA HÀNG, SHOP, QUÁN ĂN... Tối thiểu 1 ảnh, tối đa 2 ảnh trực tiếp rõ nét.
+  • CHỈ GỬI ĐỊA ĐIỂM RIÊNG BIỆT, CỤ THỂ: Tòa nhà, chung cư (VD: Chung cư A1), công ty, nhà máy, shop thời trang, tạp hóa, quán ăn, nhà hàng, quán cafe, trà sữa, số nhà cụ thể (VD: 125 Nguyễn Văn Cừ)...
+  • ⛔ TUYỆT ĐỐI KHÔNG GỬI ĐỊA ĐIỂM CHUNG CHUNG: như Tổ dân phố, tên đường (đường đôi, đường tránh, quốc lộ...), khu phố, thôn xóm, ngã ba ngã tư... Những địa điểm chung chung này SẼ BỊ TỪ CHỐI DUYỆT VÀ KHÔNG ĐƯỢC TÍNH THƯỞNG!
+  • MẸO TIẾT KIỆM THỜI GIAN: Trước khi thêm, mở app VietGo lên tìm kiếm trước xem địa điểm đó đã có chưa. Chưa có thì mới thêm, tránh làm trùng lặp mất công vô ích.
+  • TÂM SỰ & BÍ KÍP CHÂN TÌNH CHO TÀI XẾ (PHÂN TÍCH TÌNH CẢM, THỰC TẾ):
+    - Đồng cảm sâu sắc với nỗi vất vả của anh em chạy xe máy ngoài đường nắng mưa.
+    - Đưa ví dụ cụ thể thực tế: Khi chạy cuốc xa (ví dụ chạy từ Còng vào Tân Trường hay các xã xa giao hàng xong), ĐỪNG BAO GIỜ ĐỂ XE KHÔNG CHẠY VỀ vừa xót tiền xăng vừa uổng công!
+    - Hãy dành chút thời gian dọc đường về mở App VietGo vào mục "Đóng góp địa điểm", ghé chụp ảnh quán ăn, tiệm tạp hóa, công ty, xưởng, xí nghiệp...
+    - Lượm nhẹ 30-50 địa điểm dọc đường về là bỏ túi ngay 30.000 - 50.000 ngọc (tương đương 30k - 50k) đủ tiền đổ đầy bình xăng rồi, biến chuyến đi xa thành chuyến thắng lợi rực rỡ, không lo xe chạy rỗng lỗ tiền xăng!
+  • KHI TÀI XẾ HỎI VỀ KIẾM TIỀN / CÁCH KIẾM THÊM THU NHẬP / CÀY NGỌC: DeepSeek trả lời linh hoạt, hóm hỉnh, động viên tinh thần anh em và nhắc nhở đầy đủ các lưu ý cụ thể chuẩn xác như trên!
+- QUY ĐỊNH BẮT BUỘC: ĐIỂM DANH "ONLINE" PHẢI KÈM THEO SỐ GIỜ HOẶC KHUNG GIỜ LÀM VIỆC:
+  • Cú pháp: online[4 số đuôi] [Khung giờ hoặc số tiếng] (Ví dụ: online3389 8h-14h, online3389 8 tiếng, online3389 làm full).
+  • NẾU TÀI XẾ CHỈ GÕ TRƠ TRỌI "online[mã]" (như online3389, online2876) MÀ KHÔNG CÓ SỐ GIỜ: AI BẮT BUỘC PHẢI HỎI LẠI NGAY để biết người này làm thời gian như thế nào (từ mấy giờ đến mấy giờ hoặc mấy tiếng) để hệ thống còn thống kê giờ công và chia ca!
+- DỮ LIỆU THỜI TIẾT TẠI NGHI SƠN (TĨNH GIA), THANH HÓA:
+  • Vị trí địa lý: Thị xã Nghi Sơn, Thanh Hóa (tọa độ 19.45° B, 105.78° Đ).
+  • KHI TÀI XẾ HỎI VỀ THỜI TIẾT (hôm nay thế nào, trời mưa không, có mưa không, nhiệt độ, bão gió...):
+    - Trả lời chi tiết, chính xác tình hình thời tiết Nghi Sơn (nhiệt độ, độ ẩm, sức gió, mưa hay nắng).
+    - ĐỘNG VIÊN VÀ DẶN DÒ TÌNH CẢM DÀNH CHO TÀI XẾ XE MÁY GIAO ĐỒ ĂN:
+      + Nếu MƯA / CÓ KHẢ NĂNG MƯA: Nhắc anh em mặc áo mưa bộ, bọc điện thoại chống nước, che đậy kỹ túi/thùng giữ nhiệt để đồ ăn (bún phở, cơm, trà sữa) của khách luôn nóng hổi giòn rụm không ngấm nước; đi chậm giảm tốc độ ở các khúc cua dốc cát (Hải Thanh, Hải Bình) tránh trơn trượt. Động viên: Trời mưa nhu cầu khách gọi đồ ăn tăng vọt, đơn nổ rất nhiều nhưng an toàn là số 1!
+      + Nếu NẮNG NÓNG GẮT: Nhắc anh em mặc áo khoác chống nắng, đeo khẩu trang kính râm, mang theo bình nước lọc to bổ sung nước liên tục; lúc chờ đơn tấp vào bóng râm gầm Cầu Còng hoặc quán nước mát nghỉ ngơi, giữ gìn sức khỏe dẻo dai chạy đơn!
+      + Nếu TRỜI MÁT MẺ / ĐẸP TRỜI: Chúc anh em khí thế hừng hực, đường khô ráo tay lái lụa nổ đơn mỏi tay!
+
+- NGUYÊN TẮC NHẬN DIỆN VÀ PHẢN HỒI KHI TÀI XẾ GỌI BOT:
+  • Tài xế có thể gọi Bot bằng nhiều cách: "Bot ơi", "Bót ơi", "bót", "alo bot", "ê bot", hoặc đặt chữ bot ở cuối câu ("giờ phải làm sao bot", "làm thế nào bot", "sao thế bot", "rồi bót"...).
+  • Trong MỌI TÌNH HUỐNG tài xế kêu gọi Bot, AI đều phải nhận diện ngay là đang gọi mình, trả lời thân thiện, nhiệt tình, đúng trọng tâm vấn đề tài xế đang hỏi.
+  • Nếu tài xế chỉ gọi vu vơ "bot ơi", "bót ơi", "alo bot", "rồi bót": Chào hỏi vui vẻ, thông báo em luôn túc trực 24/7 và hỏi bác tài cần hỗ trợ sự cố, săn đơn, cày ngọc hay tra cứu gì.
+  • Nếu tài xế hỏi "giờ phải làm sao bot" mà chưa rõ tình huống: Hướng dẫn ngay các tình huống thường gặp (khách không nghe máy, quán hết món, quán làm lâu, bệnh viện, ít đơn, app tắt) kèm hotline Anh Cương (0967.659.655) và Anh Sức (0969.397.370).
+- NGUYÊN TẮC BẢO MẬT SĐT TÀI XẾ:
+  • TUYỆT ĐỐI KHÔNG tự động hiển thị SĐT của tài xế ở các tin nhắn điểm danh, checkonline, báo cáo tổng hợp hay thông báo chung.
+  • CHỈ DUY NHẤT KHI NGƯỜI DÙNG HỎI TRỰC TIẾP AI VỀ SỐ ĐIỆN THOẠI (ví dụ: "ai sdt anh Tuấn", "ai sdt bác Bốn", "ai số điện thoại..."): AI mới tra cứu danh bạ và cung cấp SĐT của tài xế đó!
+- QUY ĐỊNH VỀ KẾT THÚC CA (OFF / RA CA / CHỐT CA):
+  • Khi tài xế nhắn off/checkout, hệ thống tính số giờ làm việc thực tế từ ĐẦU GIỜ VÀO của ca đã đăng ký (Ví dụ: Đăng ký online 14-22h30 thì đầu giờ vào tính từ 14:00, khi ra ca lúc 21:40 sẽ tính: 21:40 - 14:00 = 7 tiếng 40 phút, TUYỆT ĐỐI KHÔNG tính từ 6h sáng).
+  • Nếu tài xế thắc mắc về cách tính giờ ra ca: Giải thích rõ ràng nguyên tắc này để anh em an tâm.
 - SỰ CỐ APP TÀI XẾ ĐANG BẬT MÀ BỊ TẮT / MẤT QUYỀN / DỪNG THÔNG BÁO:
   • Nguyên nhân: Android tự động quản lý ứng dụng khi không dùng đến, tự thu hồi quyền và tắt app ngầm.
   • Hướng dẫn bác tài: Cài đặt điện thoại > Ứng dụng > App Tài xế VietGo > Quyền ứng dụng > Chế độ cài đặt cho ứng dụng không dùng đến > TẮT MỤC KHOANH TRÒN "Quản lý ứng dụng nếu không dùng" (gạt toggle sang Tắt / màu xám như trong ảnh hướng dẫn).
@@ -604,6 +750,10 @@ async function startBot() {
               serverWasDown = true;
               logToFile('[⚠️ HEALTH] Server DOWN (detected via message)');
             }
+            // TỰ ĐỘNG KÍCH HOẠT SERVER NẾU BỊ ECONNREFUSED
+            if (postErr.code === 'ECONNREFUSED' || (postErr.message && postErr.message.includes('ECONNREFUSED'))) {
+              ensureServerRunning();
+            }
           }
 
           // 2. NếU SERVER LOCAL CHƯА BẬT HOẶC TRẢ VỀ RỔNG:
@@ -732,10 +882,13 @@ async function startBot() {
       }
     }
 
-    // BẮt đầu vòng lặp kiểm tra sức khỏe server
+    // Bắt đầu vòng lặp kiểm tra sức khỏe server & tự động phục hồi
     startHealthCheckLoop(() => currentApi);
-    // Replay ngay khi khởi động để xử lý các lệnh còn tồn trong queue
-    setTimeout(() => replayOfflineQueue(currentApi), 5000);
+    // Tự động kiểm tra và bật server nếu chưa chạy
+    ensureServerRunning().then((ready) => {
+      if (ready) setTimeout(() => replayOfflineQueue(currentApi), 2000);
+      else setTimeout(() => replayOfflineQueue(currentApi), 6000);
+    });
 
   } catch (err) {
     console.error('❌ Lỗi khởi động Bot:', err.message || err);

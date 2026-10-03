@@ -131,7 +131,7 @@ export const DriverManagement: React.FC<DriverManagementProps> = ({
           licensePlate: parts[1].toUpperCase(),
           phone: parts[2] || '',
           route: parts[3] || 'Nội thành',
-          vehicleType: (parts[4] as VehicleType) || 'Xe tải 1.25T - 2.5T'
+          vehicleType: (parts[4] as VehicleType) || 'Xe máy giao đồ ăn'
         });
       }
     }

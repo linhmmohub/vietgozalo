@@ -38,10 +38,26 @@ export const Navbar: React.FC<NavbarProps> = ({
   isLoading
 }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [weatherInfo, setWeatherInfo] = useState<{ temp: number; icon: string; text: string } | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/weather/nghison')
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.weather) {
+          setWeatherInfo({
+            temp: d.weather.temperature,
+            icon: d.weather.conditionIcon,
+            text: d.weather.conditionText
+          });
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const formattedDate = currentTime.toLocaleDateString('vi-VN', {
@@ -71,8 +87,15 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>Zalo Webhook Listener: <strong>ONLINE (Port 3000)</strong></span>
           </div>
 
+          {weatherInfo && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-300">
+              <span className="text-xs">{weatherInfo.icon}</span>
+              <span>Nghi Sơn: <strong>{weatherInfo.temp}°C</strong> ({weatherInfo.text})</span>
+            </div>
+          )}
+
           {activeShift && (
-            <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300">
+            <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-300">
               <Clock className="w-3 h-3 text-blue-400" />
               <span>Ca hiện tại: <strong>{activeShift.name}</strong></span>
             </div>

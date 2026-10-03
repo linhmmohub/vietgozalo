@@ -43,7 +43,7 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
       id: 'msg-welcome',
       sender: 'bot',
       senderName: '🤖 VietGo Food & DeepSeek AI Bot',
-      text: '🤖 BOT ĐIỂM DANH & TRỢ LÝ AI SHIPPER XE MÁY GIAO ĐỒ ĂN ĐÃ SẴN SÀNG! 🛵🍱\n👉 Tra cứu phím tắt & ca trực: Nhắn "trogiupvietgo" hoặc "trợ giúp"\n👉 Điểm danh siêu gọn: online3389 (hoặc: online3389 8h-14h)\n👉 Kiểm tra quân số: checkonline (hoặc: dsonline)\n👉 Ra ca / chốt ca: off3389 (hoặc: kt3389)\n👉 Báo nghỉ: nghi3389 xe bị thủng lốp (hoặc: "hôm nay a nghỉ nhé")\n👉 Hỏi đáp & Chém gió AI: Thêm chữ "ai " đầu câu (VD: "ai khu Đống Đa hôm nay đông đơn không?", "ai sdt điều phối?")',
+      text: '🤖 BOT ĐIỂM DANH & TRỢ LÝ AI TÀI XẾ XE MÁY GIAO ĐỒ ĂN ĐÃ SẴN SÀNG! 🛵🍱\n👉 Tra cứu phím tắt & ca trực: Nhắn "trogiupvietgo" hoặc "trợ giúp"\n👉 Điểm danh siêu gọn: online3389 (hoặc: online3389 8h-14h)\n👉 Kiểm tra quân số: checkonline (hoặc: dsonline)\n👉 Ra ca / chốt ca: off3389 (hoặc: kt3389)\n👉 Báo nghỉ: nghi3389 xe bị thủng lốp (hoặc: "hôm nay a nghỉ nhé")\n👉 Hỏi đáp & Chém gió AI: Thêm chữ "ai " đầu câu (VD: "ai khu Đống Đa hôm nay đông đơn không?", "ai sdt điều phối?")',
       time: '05:30'
     }
   ]);
@@ -92,7 +92,7 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
         senderName: selectedDriver ? selectedDriver.name : 'Tài xế Zalo',
         senderId: selectedDriver ? `sim_${selectedDriver.id}` : 'sim_user_001',
         groupId: 'zalo_group_fleet_main',
-        groupName: 'ĐỘI XE VẬN TẢI - ĐIỂM DANH & HỖ TRỢ'
+        groupName: 'ĐỘI TÀI XẾ VIETGO TĨNH GIA'
       });
 
       setRawWebhookResponse(result);
@@ -312,14 +312,30 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
               className="text-left p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-emerald-900/60 text-xs transition-colors group"
             >
               <div className="font-semibold text-emerald-400 flex items-center justify-between">
-                <span>1. Gõ "online{selectedTail}" (AI hỏi khung giờ)</span>
-                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">2 Bước</span>
+                <span>1. Gõ "online{selectedTail}" (Thiếu giờ ➔ AI hỏi lại)</span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono">Bắt buộc</span>
               </div>
               <div className="font-mono text-[11px] text-slate-200 mt-0.5">
                 online{selectedTail}
               </div>
               <div className="text-[10px] text-slate-400 mt-0.5">
-                Nếu không kèm giờ ➔ AI hỏi lại khung giờ (1..5 hoặc tự nhập) để tự phân ca
+                Không kèm giờ ➔ AI tự động hỏi lại để biết người này làm thời gian như nào để thống kê
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleQuickCommand('8h-14h')}
+              className="text-left p-2.5 rounded-lg bg-slate-950 hover:bg-slate-800 border border-amber-900/60 text-xs transition-colors group"
+            >
+              <div className="font-semibold text-amber-300 flex items-center justify-between">
+                <span>1b. Trả lời "8h-14h" (Bổ sung giờ sau khi AI hỏi)</span>
+                <span className="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono">Chốt Giờ</span>
+              </div>
+              <div className="font-mono text-[11px] text-amber-200 mt-0.5 font-bold">
+                8h-14h (hoặc: 8 tiếng, {selectedTail} 8h-14h)
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">
+                AI tự động chốt khung giờ làm việc vào bảng thống kê cho tài xế vừa hỏi
               </div>
             </button>
 
@@ -436,6 +452,34 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
           </p>
 
           <div className="grid grid-cols-1 gap-1.5 text-xs">
+            {/* Kiếm tiền & cày ngọc thêm địa điểm */}
+            <button
+              onClick={() => handleQuickCommand('ai kiếm tiền thêm thế nào?')}
+              className="text-left p-2.5 rounded-lg bg-gradient-to-r from-emerald-950/80 via-teal-950/70 to-slate-950 hover:from-emerald-900/80 hover:to-teal-900/80 border border-emerald-400/60 text-emerald-200 transition-colors"
+            >
+              <div className="font-semibold text-emerald-300 flex items-center justify-between">
+                <span>💰 ai kiếm tiền thêm / cày ngọc thêm địa điểm thế nào?</span>
+                <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono font-bold">1.000 NGỌC/ĐIỂM</span>
+              </div>
+              <div className="text-[10px] text-emerald-300/80 mt-0.5">
+                Chụp biển hiệu, số nhà, tên shop/cty... 1.000 ngọc/điểm không giới hạn; CẤM gửi tổ dân phố/tên đường chung chung!
+              </div>
+            </button>
+
+            {/* Thời tiết Nghi Sơn vệ tinh & Lời dặn dò */}
+            <button
+              onClick={() => handleQuickCommand('ai thời tiết nghi sơn hôm nay thế nào bot?')}
+              className="text-left p-2.5 rounded-lg bg-gradient-to-r from-sky-950/80 via-blue-950/70 to-slate-950 hover:from-sky-900/80 hover:to-blue-900/80 border border-sky-400/60 text-sky-200 transition-colors"
+            >
+              <div className="font-semibold text-sky-300 flex items-center justify-between">
+                <span>🌤️ ai thời tiết nghi sơn hôm nay thế nào bot?</span>
+                <span className="text-[10px] bg-sky-500/20 text-sky-300 px-1.5 py-0.2 rounded font-mono font-bold">API VỆ TINH</span>
+              </div>
+              <div className="text-[10px] text-sky-300/80 mt-0.5">
+                Dữ liệu vệ tinh thời gian thực (nhiệt độ, mưa, gió), dặn mặc áo mưa, che thùng hàng hoặc chống nắng
+              </div>
+            </button>
+
             {/* Săn đơn theo giờ & tư vấn địa bàn */}
             <button
               onClick={() => handleQuickCommand('ai giờ này ở đâu lắm đơn em ơi?')}
@@ -656,7 +700,7 @@ export const ZaloBotSimulator: React.FC<ZaloBotSimulatorProps> = ({
             </div>
             <div>
               <h3 className="font-bold text-sm tracking-tight flex items-center gap-2">
-                <span>ĐỘI XE VẬN TẢI & TRỢ LÝ DEEPSEEK AI</span>
+                <span>ĐỘI TÀI XẾ VIETGO TĨNH GIA & TRỢ LÝ DEEPSEEK AI</span>
                 <span className="bg-emerald-400/30 text-emerald-200 text-[10px] px-1.5 py-0.2 rounded border border-emerald-300/40">
                   onlineXXXX
                 </span>
